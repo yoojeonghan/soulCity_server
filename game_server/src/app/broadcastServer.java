@@ -25,26 +25,25 @@ public class broadcastServer {
     }
 
     public ChannelFuture start() throws InterruptedException {
-    	workerGroup = new NioEventLoopGroup();
+        workerGroup = new NioEventLoopGroup();
         bootstrap = new Bootstrap();
-        
+
         timer = new HashedWheelTimer();
-        
+
         bootstrap.group(workerGroup);
         bootstrap.channel(NioDatagramChannel.class);
         bootstrap.handler(new ServerChannelInitializer(timer));
-        
+
         channelFuture = bootstrap.bind(new InetSocketAddress(port)).syncUninterruptibly();
         channel = channelFuture.channel();
-        
+
         System.out.println("[GameLogicServer] Netty Udp Server Channel Create.");
-		        
-		return channelFuture;
+
+        return channelFuture;
     }
 
     public void stop() {
-        if (channel != null) 
-        {
+        if (channel != null) {
             channel.close();
         }
         workerGroup.shutdownGracefully();

@@ -15,57 +15,54 @@ import io.netty.channel.socket.DatagramPacket;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.util.CharsetUtil;
 
-public class MonsterServer
-{
+public class MonsterServer {
 	private EventLoopGroup workerGroup;
 	public Bootstrap Monsterbootstrap;
-    public static ChannelFuture channelFuture;
-    public Channel channel;
-    ChannelPipeline pipeline;
-    MonsterServer myServer;
-    MonsterHandler myHandler;
-    
-	public MonsterServer()	{
-        System.out.println("[KelsaikNest_MosterServer] Monster Server Create.");
-        myServer = this;
-        myHandler = new MonsterHandler(myServer);
+	public static ChannelFuture channelFuture;
+	public Channel channel;
+	ChannelPipeline pipeline;
+	MonsterServer myServer;
+	MonsterHandler myHandler;
+
+	public MonsterServer() {
+		System.out.println("[KelsaikNest_MosterServer] Monster Server Create.");
+		myServer = this;
+		myHandler = new MonsterHandler(myServer);
 	}
-	
+
 	public ChannelFuture start() throws InterruptedException {
 		workerGroup = new NioEventLoopGroup();
 		Monsterbootstrap = new Bootstrap();
-		
+
 		Monsterbootstrap.group(workerGroup);
 		Monsterbootstrap.channel(NioDatagramChannel.class);
-		
-		Monsterbootstrap.handler(new ChannelInitializer<DatagramChannel>()
-				{
-					@Override
-					protected void initChannel(DatagramChannel DatagramChannel) throws Exception 
-					{
-						pipeline = DatagramChannel.pipeline();
-						pipeline.addLast(myHandler);
-				        System.out.println("[MosterServer] Monster Server Init Channel.");
-					}
-			
-				});
-		
+
+		Monsterbootstrap.handler(new ChannelInitializer<DatagramChannel>() {
+			@Override
+			protected void initChannel(DatagramChannel DatagramChannel) throws Exception {
+				pipeline = DatagramChannel.pipeline();
+				pipeline.addLast(myHandler);
+				System.out.println("[MosterServer] Monster Server Init Channel.");
+			}
+
+		});
+
 		channelFuture = Monsterbootstrap.bind(900);
-        channel = channelFuture.channel();
-        
-        return channelFuture;
+		channel = channelFuture.channel();
+
+		return channelFuture;
 	}
-	
+
 	public void ChannelAddMonster(int roomNumber) {
-		try	{
+		try {
 			MonsterThread monsterThread = new MonsterThread(roomNumber);
 			pipeline.addLast(Integer.toString(roomNumber), monsterThread);
-		} catch(IllegalArgumentException e) {
-	        System.out.println("[MosterServer] " + e);
+		} catch (IllegalArgumentException e) {
+			System.out.println("[MosterServer] " + e);
 		}
 
 	}
-		 
+
 	public void ChannelWrite(String msg) {
 		try {
 			System.out.println("[MosterServer] Monster Channel Write");
@@ -75,42 +72,41 @@ public class MonsterServer
 			e.printStackTrace();
 		}
 	}
-	
-	public void ControlMonster(int stateNum, int roomNum, String targetName)
-	{
-		switch(stateNum) {
+
+	public void ControlMonster(int stateNum, int roomNum, String targetName) {
+		switch (stateNum) {
 			case 3002:
-				MonsterThread monsterThread = (MonsterThread)pipeline.get(Integer.toString(roomNum));
+				MonsterThread monsterThread = (MonsterThread) pipeline.get(Integer.toString(roomNum));
 				monsterThread.ActiveMonster(targetName);
 				break;
 		}
 	}
-	
-	public void ControlMonster(int stateNum, int roomNum, float damage)	{
+
+	public void ControlMonster(int stateNum, int roomNum, float damage) {
 		MonsterThread monsterThread;
-		
-		switch(stateNum) {
+
+		switch (stateNum) {
 			case 3011:
-				monsterThread = (MonsterThread)pipeline.get(Integer.toString(roomNum));
+				monsterThread = (MonsterThread) pipeline.get(Integer.toString(roomNum));
 				monsterThread.AttackMonster(damage);
 				break;
-				
+
 			case 3012:
-		        System.out.println("[KelsaikNest_MosterServer] CALL AttackMonster2");
-				monsterThread = (MonsterThread)pipeline.get(Integer.toString(roomNum));
+				System.out.println("[KelsaikNest_MosterServer] CALL AttackMonster2");
+				monsterThread = (MonsterThread) pipeline.get(Integer.toString(roomNum));
 				monsterThread.IsNuckBack = true;
 				monsterThread.AttackMonster2(damage);
 				break;
 		}
 	}
-	
+
 	public void close() {
 		if (workerGroup != null) {
-		  	workerGroup.shutdownGracefully();
+			workerGroup.shutdownGracefully();
 		}
-		 
-	    if (channel != null) {
-	        channel.close();
-	    }
-	 }
+
+		if (channel != null) {
+			channel.close();
+		}
+	}
 }
